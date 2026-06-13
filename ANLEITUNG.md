@@ -24,8 +24,8 @@ Mit dieser Methode nutzt du das mitgelieferte Toolchain-Skript. GitHub compiles 
    * Schalte das Repository auf **Public** oder **Private** und klicke auf **Create Repository**.
 
 3. **Dateien hochladen**:
-   * Lade den Inhalt des Ordners `android_project` in dein neues Repository hoch.
-   * *Wichtig*: Die Ordnerstruktur muss so hochgeladen werden, dass Dateien wie `settings.gradle.kts` direkt im Hauptverzeichnis des GitHub Repositories liegen. Dadurch wird auch der Ordner `.github/workflows/android-build.yml` hochgeladen.
+   * Du kannst entweder das **komplette entpackte ZIP-Archiv** (mit allen Dateien) hochladen oder **nur den Inhalt des Ordners `android_project`**. Beides funktioniert einwandfrei!
+   * *Hintergrund*: Unsere Actions-Konfig ist intelligent genug, um beide Ordnerstrukturen automatisch zu erkennen, in das richtige Verzeichnis zu navigieren und das APK erfolgreich zu kompilieren! Der Ordner `.github/workflows/android-build.yml` muss sich dabei in der hochgeladenen Struktur befinden.
 
 4. **Der Cloud-Build startet automatisch**:
    * Sobald die Dateien hochgeladen sind, wechselst du auf GitHub auf den Tabulator **Actions**.
