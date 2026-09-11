@@ -10,6 +10,7 @@ object Prefs {
     fun assistantOn(c: Context) = p(c).getBoolean("assistant_on", true)
     fun tree(c: Context) = p(c).getBoolean("tree", true)
     fun screen(c: Context) = p(c).getBoolean("screen", true)
+    fun overlay(c: Context) = p(c).getBoolean("overlay", true)
     fun timer(c: Context) = p(c).getBoolean("timer", true)
     fun vibrate(c: Context) = p(c).getBoolean("vibrate", true)
 }
