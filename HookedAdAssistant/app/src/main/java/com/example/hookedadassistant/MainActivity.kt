@@ -40,9 +40,13 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() { super.onResume(); refresh() }
 
     private fun refresh() {
+        val info = packageManager.getPackageInfo(packageName, 0)
+        val version = info.versionName ?: "?"
+        val code = if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else @Suppress("DEPRECATION") info.versionCode.toLong()
+        b.titleText.text = "Hooked Ad Assistant $version"
         val state = if (Prefs.assistantOn(this)) "EIN" else "AUS"
         val overlay = if (Prefs.overlay(this)) "EIN" else "AUS"
-        b.statusText.text = "Assistant: $state\nSpotlight: $overlay\nZiel-App: Hooked Inc.\nHinweise: lautlos"
+        b.statusText.text = "Version: $version (Build $code)\nAssistant: $state\nSpotlight: $overlay\nZiel-App: Hooked Inc.\nHinweise: lautlos"
         b.statsText.text = StatsRepository(this).text()
     }
 }
