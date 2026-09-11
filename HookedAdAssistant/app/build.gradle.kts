@@ -6,8 +6,8 @@ android {
         applicationId = "com.example.hookedadassistant"
         minSdk = 30
         targetSdk = 35
-        versionCode = 5
-        versionName = "3.3"
+        versionCode = 6
+        versionName = "3.4"
     }
     buildFeatures { viewBinding = true }
     compileOptions {
