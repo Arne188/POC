@@ -22,11 +22,13 @@ class MainActivity : AppCompatActivity() {
         b.masterSwitch.isChecked = Prefs.assistantOn(this)
         b.treeDetectionSwitch.isChecked = Prefs.tree(this)
         b.screenDetectionSwitch.isChecked = Prefs.screen(this)
+        b.overlaySwitch.isChecked = Prefs.overlay(this)
         b.timerSwitch.isChecked = Prefs.timer(this)
         b.vibrateSwitch.isChecked = Prefs.vibrate(this)
         b.masterSwitch.setOnCheckedChangeListener { _, v -> p.edit().putBoolean("assistant_on", v).apply(); refresh() }
         b.treeDetectionSwitch.setOnCheckedChangeListener { _, v -> p.edit().putBoolean("tree", v).apply() }
         b.screenDetectionSwitch.setOnCheckedChangeListener { _, v -> p.edit().putBoolean("screen", v).apply() }
+        b.overlaySwitch.setOnCheckedChangeListener { _, v -> p.edit().putBoolean("overlay", v).apply() }
         b.timerSwitch.setOnCheckedChangeListener { _, v -> p.edit().putBoolean("timer", v).apply() }
         b.vibrateSwitch.setOnCheckedChangeListener { _, v -> p.edit().putBoolean("vibrate", v).apply() }
         b.openAccessibilityButton.setOnClickListener { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
@@ -39,7 +41,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun refresh() {
         val state = if (Prefs.assistantOn(this)) "EIN" else "AUS"
-        b.statusText.text = "Assistant: $state\nZiel-App: Hooked Inc. (se.ace.fishinc)\nHinweise: lautlos"
+        val overlay = if (Prefs.overlay(this)) "EIN" else "AUS"
+        b.statusText.text = "Assistant: $state\nSpotlight: $overlay\nZiel-App: Hooked Inc.\nHinweise: lautlos"
         b.statsText.text = StatsRepository(this).text()
     }
 }
