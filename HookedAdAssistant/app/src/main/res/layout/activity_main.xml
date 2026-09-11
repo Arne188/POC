@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="vertical" android:padding="22dp">
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="Hooked Ad Assistant 2.0" android:textSize="26sp" android:textStyle="bold" />
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" android:text="Für Hooked Inc. (se.ace.fishinc). Erkennt typische Weiter/Schließen-Elemente, kann zusätzlich den Bildschirm lokal nach einem X prüfen und nutzt Timer als Fallback. Keine automatischen Klicks." />
+    <Button android:id="@+id/openAccessibilityButton" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="20dp" android:text="Bedienungshilfe aktivieren" />
+    <Switch android:id="@+id/treeDetectionSwitch" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="14dp" android:text="UI-/Accessibility-Erkennung" />
+    <Switch android:id="@+id/screenDetectionSwitch" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Lokale X-Erkennung per Screenshot" />
+    <Switch android:id="@+id/timerSwitch" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Timer-Fallback (35 s / 60 s)" />
+    <Switch android:id="@+id/vibrateSwitch" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Vibration" />
+    <Button android:id="@+id/testNotificationButton" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="14dp" android:text="Alarm testen" />
+    <TextView android:id="@+id/statusText" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="20dp" android:text="Status" android:textStyle="bold" />
+    <TextView android:id="@+id/statsText" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" android:text="Statistik" />
+    <Button android:id="@+id/resetStatsButton" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" android:text="Statistik zurücksetzen" />
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="24dp" android:text="Hinweis: Screenshot-Erkennung läuft vollständig lokal im Accessibility-Service. Bilder werden nicht gespeichert oder übertragen. Die X-Erkennung ist heuristisch und kann je nach Werbeformat Fehlalarme erzeugen." android:textSize="13sp" />
+</LinearLayout></ScrollView>

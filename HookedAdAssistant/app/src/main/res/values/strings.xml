@@ -1,0 +1,4 @@
+<resources>
+<string name="app_name">Hooked Ad Assistant</string>
+<string name="accessibility_desc">Erkennt Bedienelemente und typische Schließen-Symbole in Rewarded Ads und benachrichtigt dich. Es werden keine Klicks automatisiert.</string>
+</resources>
