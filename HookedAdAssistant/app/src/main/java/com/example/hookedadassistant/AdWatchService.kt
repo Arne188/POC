@@ -14,20 +14,24 @@ import java.util.concurrent.Executors
 class AdWatchService : AccessibilityService() {
     private val handler = Handler(Looper.getMainLooper())
     private val exec = Executors.newSingleThreadExecutor()
+    private lateinit var spotlight: SpotlightOverlay
     private var foregroundPackage = ""
     private var previousPackage = ""
     private var lastAlertAt = 0L
     private var possibleAd = false
-    private var adStart = 0L
     private var xHits = 0
 
     private val keywords = listOf("close", "skip", "continue", "next", "done", "finish", "schließen", "überspringen", "weiter", "fertig", "claim", "collect")
     private val adTokens = listOf("rewarded", "interstitial", "advert", "unityads", "applovin", "ironsource", "vungle", "mintegral", "admob", "googleads", "facebookads")
 
-    override fun onServiceConnected() { super.onServiceConnected(); handler.post(screenLoop) }
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        spotlight = SpotlightOverlay(this)
+        handler.post(screenLoop)
+    }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        if (!Prefs.assistantOn(this)) return
+        if (!Prefs.assistantOn(this)) { if (::spotlight.isInitialized) spotlight.hide(); return }
         event ?: return
         val pkg = event.packageName?.toString().orEmpty()
         if (pkg.isNotBlank()) updatePackage(pkg)
@@ -36,11 +40,27 @@ class AdWatchService : AccessibilityService() {
         if (looksAdRelated(pkg.lowercase(Locale.getDefault())) || looksAdRelated(eventClass) || looksAdRelated(eventText)) startAd()
         if (!Prefs.tree(this)) return
         val root = rootInActiveWindow ?: return
+        val action = findActionElement(root)
         when {
-            containsActionElement(root) -> { startAd(); alert("Werbe-Bedienelement erkannt") }
-            possibleAd && containsLikelyCloseButton(root) -> alert("Mögliches Schließen-/Weiter-Element erkannt")
+            action != null -> {
+                startAd()
+                if (Prefs.overlay(this)) showNode(action, "Hier tippen")
+                alert("Werbe-Bedienelement erkannt")
+            }
+            possibleAd -> {
+                val close = findLikelyCloseButton(root)
+                if (close != null) {
+                    if (Prefs.overlay(this)) showNode(close, "Schliessen / Weiter")
+                    alert("Mögliches Schließen-/Weiter-Element erkannt")
+                }
+            }
             treeLooksAdRelated(root) -> startAd()
         }
+    }
+
+    private fun showNode(node: AccessibilityNodeInfo, label: String) {
+        val r = Rect(); node.getBoundsInScreen(r)
+        if (!r.isEmpty && ::spotlight.isInitialized) spotlight.show(r, label)
     }
 
     private fun looksAdRelated(s: String) = adTokens.any { s.contains(it) }
@@ -56,15 +76,18 @@ class AdWatchService : AccessibilityService() {
     private fun startAd() {
         if (!Prefs.assistantOn(this) || possibleAd) return
         possibleAd = true
-        adStart = System.currentTimeMillis()
-        StatsRepository(this).startAd(adStart)
+        StatsRepository(this).startAd(System.currentTimeMillis())
         if (Prefs.timer(this)) {
             handler.postDelayed({ if (Prefs.assistantOn(this) && possibleAd) alert("35 s erreicht – bitte Werbung prüfen") }, 35_000)
             handler.postDelayed({ if (Prefs.assistantOn(this) && possibleAd) alert("55 s erreicht – Schließen/Weiter könnte verfügbar sein") }, 55_000)
         }
     }
 
-    private fun finishAd() { possibleAd = false; adStart = 0L; xHits = 0; StatsRepository(this).finishAd(System.currentTimeMillis()) }
+    private fun finishAd() {
+        possibleAd = false; xHits = 0
+        if (::spotlight.isInitialized) spotlight.hide()
+        StatsRepository(this).finishAd(System.currentTimeMillis())
+    }
 
     private val screenLoop = object : Runnable {
         override fun run() {
@@ -85,7 +108,11 @@ class AdWatchService : AccessibilityService() {
                     b.recycle()
                     xHits = if (hit) xHits + 1 else 0
                     val neededHits = if (possibleAd) 2 else 3
-                    if (xHits >= neededHits) { startAd(); alert("Mögliches X/Schließen-Symbol erkannt"); xHits = 0 }
+                    if (xHits >= neededHits) {
+                        startAd()
+                        alert("Mögliches X/Next erkannt – oben links/rechts prüfen")
+                        xHits = 0
+                    }
                 } finally { hb.close() }
             }
             override fun onFailure(errorCode: Int) = Unit
@@ -93,16 +120,18 @@ class AdWatchService : AccessibilityService() {
     }
 
     private fun nodeLabel(node: AccessibilityNodeInfo) = buildString {
-        node.text?.let { append(it).append(' ') }; node.contentDescription?.let { append(it).append(' ') }; node.viewIdResourceName?.let { append(it) }
+        node.text?.let { append(it).append(' ') }
+        node.contentDescription?.let { append(it).append(' ') }
+        node.viewIdResourceName?.let { append(it) }
     }.lowercase(Locale.getDefault()).trim()
 
-    private fun containsActionElement(node: AccessibilityNodeInfo?): Boolean {
-        if (node == null) return false
+    private fun findActionElement(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+        if (node == null) return null
         val text = nodeLabel(node)
-        if (keywords.any { text.contains(it) }) return true
-        if (node.isClickable && text in listOf("x", "×", "✕", "✖", ">", "›", "»")) return true
-        for (i in 0 until node.childCount) if (containsActionElement(node.getChild(i))) return true
-        return false
+        if ((node.isClickable || node.isFocusable) && keywords.any { text.contains(it) }) return node
+        if (node.isClickable && text in listOf("x", "×", "✕", "✖", ">", "›", "»")) return node
+        for (i in 0 until node.childCount) findActionElement(node.getChild(i))?.let { return it }
+        return null
     }
 
     private fun treeLooksAdRelated(node: AccessibilityNodeInfo?): Boolean {
@@ -113,19 +142,19 @@ class AdWatchService : AccessibilityService() {
         return false
     }
 
-    private fun containsLikelyCloseButton(node: AccessibilityNodeInfo?): Boolean {
-        if (node == null) return false
+    private fun findLikelyCloseButton(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+        if (node == null) return null
         if (node.isClickable) {
             val r = Rect(); node.getBoundsInScreen(r)
             val w = resources.displayMetrics.widthPixels; val h = resources.displayMetrics.heightPixels
-            if (w > 0 && h > 0 && r.width() in 18..(w * 0.15).toInt() && r.height() in 18..(h * 0.10).toInt()) {
-                val nearTop = r.centerY() < h * 0.20
-                val nearSide = r.centerX() < w * 0.18 || r.centerX() > w * 0.82
-                if (nearTop && nearSide && nodeLabel(node).isNotBlank()) return true
+            if (w > 0 && h > 0 && r.width() in 18..(w * 0.18).toInt() && r.height() in 18..(h * 0.12).toInt()) {
+                val nearTop = r.centerY() < h * 0.24
+                val nearSide = r.centerX() < w * 0.22 || r.centerX() > w * 0.78
+                if (nearTop && nearSide) return node
             }
         }
-        for (i in 0 until node.childCount) if (containsLikelyCloseButton(node.getChild(i))) return true
-        return false
+        for (i in 0 until node.childCount) findLikelyCloseButton(node.getChild(i))?.let { return it }
+        return null
     }
 
     private fun alert(msg: String) {
@@ -137,5 +166,8 @@ class AdWatchService : AccessibilityService() {
     }
 
     override fun onInterrupt() = Unit
-    override fun onDestroy() { handler.removeCallbacksAndMessages(null); exec.shutdownNow(); super.onDestroy() }
+    override fun onDestroy() {
+        if (::spotlight.isInitialized) spotlight.hide()
+        handler.removeCallbacksAndMessages(null); exec.shutdownNow(); super.onDestroy()
+    }
 }
